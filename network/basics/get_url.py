@@ -90,6 +90,10 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  headers:
+    description:
+      - A set of headers provided alongside request.
+    required: false
   timeout:
     description:
       - Timeout for URL request
@@ -142,14 +146,22 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, headers, timeout=10):
     """
     Download data from the url and store in a temporary file.
 
     Return (tempfile, info about the request)
     """
 
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout)
+    rsp, info = fetch_url(
+        module,
+        url,
+        use_proxy = use_proxy,
+        force = force,
+        last_mod_time = last_mod_time,
+        headers = headers,
+        timeout = timeout,
+    )
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
@@ -198,6 +210,7 @@ def main():
         url = dict(required=True),
         dest = dict(required=True),
         sha256sum = dict(default=''),
+        headers = dict(required=False, type='dict'),
         timeout = dict(required=False, type='int', default=10),
     )
 
@@ -212,6 +225,7 @@ def main():
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
+    headers = module.params['headers']
     timeout = module.params['timeout']
 
     dest_is_dir = os.path.isdir(dest)
@@ -227,7 +241,7 @@ def main():
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, headers, timeout)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
