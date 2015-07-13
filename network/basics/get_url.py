@@ -94,6 +94,7 @@ options:
     description:
       - A set of headers provided alongside request.
     required: false
+    version_added: '2.0'
   timeout:
     description:
       - Timeout for URL request
